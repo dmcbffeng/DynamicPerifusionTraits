@@ -1,0 +1,8 @@
+PeakName,PeakRange,BaselineTime,MinHeightRatio,MinPeakLength,BaselineOrPeak,NegativePeak,CalculateSIorII
+Basal Secretion,3-9,3-9,0,0,Baseline,False,False
+G 16.7,9-60,3-9,0.1,3,Peak,False,False
+G 16.7 phase 1,9-24,3-9,0.1,3,Peak,False,False
+G 16.7 phase 2,24-60,3-9,0.1,3,Peak,False,False
+G 16.7+IMBX,63-90,63|90,0.1,3,Peak,False,False
+G 1.7+Epi,93-120,93|120,0.1,3,Peak,True,False
+KCl 20,120-150,120|150,0.1,3,Peak,False,False
