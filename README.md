@@ -13,6 +13,8 @@ The pipeline analyzes time-series secretion data and extracts the following trai
 
 These traits are calculated for multiple experimental phases (e.g., glucose stimulation, KCl stimulation) across all donors in your dataset.
 
+![Pipeline Overview](F2.large.jpg)
+
 ## Requirements
 
 - Python 3.7+
