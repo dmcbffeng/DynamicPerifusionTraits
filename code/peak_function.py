@@ -334,6 +334,7 @@ def traits_for_all(
         Index(['Donor ID', 'TEST Basal Secretion'], dtype='object')
     """
     # Get all column names - identify Time column and donor IDs
+    input_df.columns = input_df.columns.astype(str)
     all_cols = input_df.columns
     time_col_name = [col for col in all_cols if 'time' in col.lower()]
     if not time_col_name:
