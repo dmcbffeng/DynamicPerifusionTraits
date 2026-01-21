@@ -74,7 +74,7 @@ param_df = pd.read_csv(
 res4 = traits_for_all(
     gcg_content,
     param_df,
-    trait_prefix='INS-content'
+    trait_prefix='GCG-content'
 )
 
 res1.set_index('Donor ID', inplace=True)
