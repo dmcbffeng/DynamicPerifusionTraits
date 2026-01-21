@@ -8,7 +8,7 @@ traits including basal secretion, AUCs, SIs, and IIs.
 Data is read from Excel files and processed using the traits_for_all function
 from peak_function.py, with results saved to CSV files.
 """
-
+from functools import reduce
 import pandas as pd
 from peak_function import traits_for_all
 
@@ -54,12 +54,13 @@ param_df = pd.read_csv(
 )
 
 # Calculate traits for INS IEQ
-res = traits_for_all(
+res1 = traits_for_all(
     t1d_and_ctrl_ins_ieq,
     param_df,
     trait_prefix='INS-IEQ'
 )
-res.to_csv('../output/INS_IEQ_traits.csv', index=False)
+# res.to_csv('../output/INS_IEQ_traits.csv', index=False)
+# print(res['Donor ID'])
 
 ########################
 #     INS content      #
@@ -89,10 +90,98 @@ param_df = pd.read_csv(
 )
 
 # Calculate traits for INS content
-res = traits_for_all(
+res2 = traits_for_all(
     t1d_and_ctrl_ins_content,
     param_df,
     trait_prefix='INS-content'
 )
-res.to_csv('../output/INS_content_traits.csv', index=False)
+# res.to_csv('../output/INS_content_traits.csv', index=False)
+# print(res['Donor ID'])
+
+
+########################
+#        GCG IEQ       #
+########################
+t1d_gcg_ieq = pd.read_excel(
+    '../data/T1D vs Ctrls.xlsx',
+    sheet_name='T1D GCG IEQs_min',
+    skiprows=1, nrows=51,  # only use the first 51 rows
+    usecols=list(range(21))  # only use the first 21 columns
+)
+t1d_gcg_ieq.drop(['Fraction', 'Stimulus'], axis=1, inplace=True)
+t1d_gcg_ieq.columns = ['time'] + t1d_donor_names
+
+nd_gcg_ieq = pd.read_excel(
+    '../data/T1D vs Ctrls.xlsx',
+    sheet_name='ND Ctrls GCG IEQ',
+    skiprows=2, nrows=50,
+    usecols=list(range(7, 19)) + list(range(21, 35))
+)
+
+# Merge ND and T1D data
+t1d_and_ctrl_gcg_ieq = pd.concat([t1d_gcg_ieq, nd_gcg_ieq], axis=1)
+
+# Load parameters for INS IEQ analysis
+param_df = pd.read_csv(
+    '../parameter/GCG_IEQ_parameter.csv'
+)
+
+# Calculate traits for INS IEQ
+res3 = traits_for_all(
+    t1d_and_ctrl_gcg_ieq,
+    param_df,
+    trait_prefix='GCG-IEQ'
+)
+# res.to_csv('../output/GCG_IEQ_traits.csv', index=False)
+# print(res['Donor ID'])
+
+########################
+#     INS content      #
+########################
+t1d_gcg_content = pd.read_excel(
+    '../data/T1D vs Ctrls.xlsx',
+    sheet_name='T1D GCG Content_min',
+    skiprows=1, nrows=51,
+    usecols=list(range(21))
+)
+t1d_gcg_content.drop(['Fraction', 'Stimulus'], axis=1, inplace=True)
+t1d_gcg_content.columns = ['time'] + t1d_donor_names
+
+nd_gcg_content = pd.read_excel(
+    '../data/T1D vs Ctrls.xlsx',
+    sheet_name='ND Ctrls GCG Cont.',
+    skiprows=2, nrows=50,
+    usecols=list(range(7, 19)) + list(range(19, 34))
+)
+
+# Merge ND and T1D data
+t1d_and_ctrl_gcg_content = pd.concat([t1d_gcg_content, nd_gcg_content], axis=1)
+
+# Load parameters for INS content analysis
+param_df = pd.read_csv(
+    '../parameter/GCG_content_parameter.csv'
+)
+
+# Calculate traits for INS content
+res4 = traits_for_all(
+    t1d_and_ctrl_gcg_content,
+    param_df,
+    trait_prefix='GCG-content'
+)
+# res.to_csv('../output/GCG_content_traits.csv', index=False)
+# print(res['Donor ID'])
+
+
+dfs = [res1, res2, res3, res4]
+
+merged_df = reduce(
+    lambda left, right: pd.merge(
+        left, right,
+        on="Donor ID",
+        how="outer"
+    ),
+    dfs
+)
+merged_df.to_csv('../output/T1D_vs_Ctrl_all_traits.csv', index=False)
+
 

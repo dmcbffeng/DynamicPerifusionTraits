@@ -54,8 +54,8 @@ for col in df.columns:
         gcg_ieq[col[0]] = pd.to_numeric(df[col], errors='coerce')
     elif col[1] == '% content/min':
         gcg_content[col[0]] = pd.to_numeric(df[col], errors='coerce')
-gcg_ieq = pd.DataFrame(ins_ieq)
-gcg_content = pd.DataFrame(ins_content)
+gcg_ieq = pd.DataFrame(gcg_ieq)
+gcg_content = pd.DataFrame(gcg_content)
 
 param_df = pd.read_csv(
     '../parameter/GCG_IEQ_parameter.csv'
