@@ -14,16 +14,19 @@ import pandas as pd
 plt.rcParams["font.family"] = "Arial"
 
 # Fixed stimulus layout (kept constant across datasets).
-STIMULUS_SEGMENTS: List[Tuple[int, int, str, bool]] = [
-    (0, 12, "G 5.6", False),
-    (12, 57, "G 16.7", True),
-    (57, 63, "G 5.6", False),
-    (63, 90, "G 16.7\n+ IMBX 100", True),
-    (90, 96, "G 5.6", False),
-    (96, 108, "G 1.7\n+ Epi 1", True),
-    (108, 120, "G 5.6", False),
-    (120, 132, "KCl 20", True),
-    (132, 150, "G 5.6", False),
+# Important convention:
+# - "G 5.6" phases are background-only (no black bar)
+# - All other labels are stimuli and get black bars
+STIMULUS_SEGMENTS: List[Tuple[int, int, str]] = [
+    (0, 12, "G 5.6"),
+    (12, 42, "G 16.7"),
+    (42, 63, "G 5.6"),
+    (63, 72, "G 16.7\n+ IMBX 100"),
+    (72, 93, "G 5.6"),
+    (93, 102, "G 1.7\n+ Epi 1"),
+    (102, 123, "G 5.6"),
+    (123, 132, "KCl 20"),
+    (132, 150, "G 5.6"),
 ]
 
 
@@ -94,8 +97,9 @@ def _plot_top_stimulus_annotations(ax: plt.Axes, y_top: float) -> None:
     bar_y = y_top * 1.005
     bar_h = y_top * 0.025
 
-    for start, end, label, has_bar in STIMULUS_SEGMENTS:
-        if has_bar:
+    for start, end, label in STIMULUS_SEGMENTS:
+        is_stimulus = label != "G 5.6"
+        if is_stimulus:
             ax.add_patch(
                 plt.Rectangle(
                     (start, bar_y),
@@ -170,8 +174,8 @@ def visualize_trace_csv(
     fig, ax = plt.subplots(figsize=(8, 6))
 
     # Fixed pale-yellow windows for G 5.6 phases.
-    for start, end, _, has_bar in STIMULUS_SEGMENTS:
-        if not has_bar:
+    for start, end, label in STIMULUS_SEGMENTS:
+        if label == "G 5.6":
             ax.axvspan(start, end, color="#f7f5cf", alpha=0.7, zorder=0)
 
     # Fixed vertical guide lines.
