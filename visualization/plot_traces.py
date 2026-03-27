@@ -173,9 +173,9 @@ def visualize_trace_csv(
 
     fig, ax = plt.subplots(figsize=(8, 6))
 
-    # Fixed pale-yellow windows for G 5.6 phases.
+    # Fixed pale-yellow windows for stimulus phases (non-G 5.6).
     for start, end, label in STIMULUS_SEGMENTS:
-        if label == "G 5.6":
+        if label != "G 5.6":
             ax.axvspan(start, end, color="#f7f5cf", alpha=0.7, zorder=0)
 
     # Fixed vertical guide lines.
@@ -200,12 +200,12 @@ def visualize_trace_csv(
         time_x.to_numpy(),
         (y_mean - y_sem).to_numpy(),
         (y_mean + y_sem).to_numpy(),
-        color="#6fd0c3",
-        alpha=0.35,
+        color="#f48fb1",
+        alpha=0.30,
         linewidth=0,
         zorder=3,
     )
-    ax.plot(time_x, y_mean, color="#3fb6a8", linewidth=2.5, zorder=4)
+    ax.plot(time_x, y_mean, color="#c2185b", linewidth=2.8, zorder=4)
 
     ax.set_xlim(0, 150)
     ax.set_ylim(0, y_max * 1.08)
