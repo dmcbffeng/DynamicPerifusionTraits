@@ -1,76 +1,104 @@
-# Visualization Script
+# Visualization Scripts
 
-This folder contains a plotting script to generate perifusion trace figures from CSV files.
+This folder contains two plotting scripts:
 
-## Script
+- `plot_traces.py`: one cohort mean trace (with SEM)
+- `plot_grouped_traces.py`: one mean trace (with SEM) per user-defined group
 
-- `plot_traces.py`
+Both scripts keep the fixed stimulation layout, vertical dotted boundaries, top annotations, and top horizontal boundary line.
 
-## What It Generates
+## 1) Single-Cohort Plot (`plot_traces.py`)
 
-For each input CSV, the script creates one PNG figure with:
+### Default figure style (matches `example2.png`)
 
-- individual donor traces (light lines)
-- mean trace (bold line)
-- mean +/- SEM shadow
-- fixed background windows, vertical lines, and top annotations
+- mean line with dot markers
+- shaded `mean +/- SEM`
+- no individual donor traces by default
+- yellow shading marks **stimulus phases** (not `G 5.6`)
+- black top bars mark stimulus phases
+- `G 5.6` labels stay inside the plot area
 
-## Y-Axis Label Rules
+### Y-axis label inference from filename
 
-The y-axis label is inferred from the input filename:
+- `ins` + `ieq` -> `Insulin secretion (ng/100 IEQ/min)`
+- `ins` + `content` -> `Insulin secretion (% content/min)`
+- `gcg` + `ieq` -> `Glucagon secretion (pg/100 IEQ/min)`
+- `gcg` + `content` -> `Glucagon secretion (% content/min)`
 
-- contains `ins` + `ieq` -> `Insulin secretion (ng/100 IEQ/min)`
-- contains `ins` + `content` -> `Insulin secretion (% content/min)`
-- contains `gcg` + `ieq` -> `Glucagon secretion (pg/100 IEQ/min)`
-- contains `gcg` + `content` -> `Glucagon secretion (% content/min)`
+Ensure those keywords are in the CSV filename.
 
-Make sure input filenames include those keywords (for example, `HIPP_ins_ieq.csv`).
-
-## Usage
-
-From the repository root:
+### Usage
 
 ```bash
 python visualization/plot_traces.py visualization/HIPP_ins_ieq.csv --outdir visualization
 ```
 
-Multiple files at once:
+Multiple files:
 
 ```bash
 python visualization/plot_traces.py \
   visualization/HIPP_ins_ieq.csv \
   visualization/HIPP_gcg_ieq.csv \
-  visualization/HIPP_ins_content.csv \
-  visualization/HIPP_gcg_content.csv \
   --outdir visualization
 ```
 
-## Output Naming
+Optional:
 
-Each output file is named:
+- `--show-individual-traces`: overlay all donor traces
+- `--dpi <int>`: figure DPI (default `300`)
+
+Output name pattern:
 
 - `<input_stem>_trace.png`
 
-Examples:
+## 2) Grouped Plot (`plot_grouped_traces.py`)
 
-- `HIPP_ins_ieq.csv` -> `HIPP_ins_ieq_trace.png`
-- `HIPP_gcg_content.csv` -> `HIPP_gcg_content_trace.png`
+This script compares groups (for example, Healthy vs Diabetes) as separate mean+SEM lines.
+Legend labels are shown as `group 1`, `group 2`, ... (with sample size), based on sorted group names.
 
-## Optional Arguments
+### Group assignment input
 
-- `--outdir <dir>`: output directory (default: same directory as each input file)
-- `--dpi <int>`: figure DPI (default: `300`)
+Provide a CSV with two columns:
 
-## Python API (Optional)
+- donor/sample id column (name can include `donor`, `rrid`, or `sample`)
+- group column (name includes `group`)
 
-You can also import and call from Python:
+Example file included:
+
+- `visualization/example_group_assignments.csv`
+
+Example contents:
+
+```csv
+donor_id,group
+RRID:SAMN08769199,Healthy
+RRID:SAMN08769090,Diabetes
+```
+
+### Usage
+
+```bash
+python visualization/plot_grouped_traces.py \
+  visualization/HIPP_ins_ieq.csv \
+  visualization/example_group_assignments.csv \
+  --out visualization/HIPP_ins_ieq_grouped_example.png
+```
+
+Output default (if `--out` is not given):
+
+- `<input_stem>_grouped_trace.png`
+
+## Python API
 
 ```python
-from visualization.plot_traces import visualize_trace_csv, visualize_many
+from visualization.plot_traces import visualize_trace_csv
+from visualization.plot_grouped_traces import visualize_grouped_trace_csv
 
 visualize_trace_csv("visualization/HIPP_ins_ieq.csv")
-visualize_many(
-    ["visualization/HIPP_ins_ieq.csv", "visualization/HIPP_gcg_ieq.csv"],
-    output_dir="visualization",
+
+visualize_grouped_trace_csv(
+    csv_path="visualization/HIPP_ins_ieq.csv",
+    group_csv_path="visualization/example_group_assignments.csv",
+    output_path="visualization/HIPP_ins_ieq_grouped_example.png",
 )
 ```

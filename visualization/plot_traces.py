@@ -93,9 +93,23 @@ def _prepare_trace_data(input_df: pd.DataFrame) -> Tuple[pd.Series, pd.DataFrame
 
 
 def _plot_top_stimulus_annotations(ax: plt.Axes, y_top: float) -> None:
-    text_y = y_top * 1.04
-    bar_y = y_top * 1.005
+    boundary_h = y_top * 0.004
+    bar_y = y_top + boundary_h
     bar_h = y_top * 0.025
+    text_y = bar_y + bar_h + y_top * 0.004
+
+    # Draw a thin boundary band instead of a 1px line to avoid anti-alias seams.
+    ax.add_patch(
+        plt.Rectangle(
+            (0, y_top),
+            150,
+            boundary_h,
+            facecolor="black",
+            edgecolor="none",
+            clip_on=False,
+            zorder=5,
+        )
+    )
 
     for start, end, label in STIMULUS_SEGMENTS:
         is_stimulus = label != "G 5.6"
@@ -142,13 +156,13 @@ def visualize_trace_csv(
     output_path: str | Path | None = None,
     show: bool = False,
     dpi: int = 300,
+    show_individual_traces: bool = False,
 ) -> Path:
     """
     Create a trace visualization from one perifusion CSV file.
 
     The figure keeps a fixed style:
-    - all donor traces as light lines
-    - mean trace and SEM shadow
+    - mean trace with dot markers and SEM shadow
     - fixed vertical guide lines
     - fixed top stimulus annotations
     - fixed glucose background windows
@@ -183,29 +197,39 @@ def visualize_trace_csv(
     for x in boundaries:
         ax.axvline(x=x, color="#d8d8d8", linestyle=":", linewidth=1.0, zorder=1)
 
-    # All individual donor traces (light).
-    colors = plt.cm.GnBu(np.linspace(0.45, 0.9, trace_df.shape[1]))
-    for idx, col in enumerate(trace_df.columns):
-        ax.plot(
-            time_x,
-            trace_df[col],
-            color=colors[idx],
-            alpha=0.35,
-            linewidth=1.5,
-            zorder=2,
-        )
+    # Optional: all individual donor traces (light).
+    if show_individual_traces:
+        colors = plt.cm.GnBu(np.linspace(0.45, 0.9, trace_df.shape[1]))
+        for idx, col in enumerate(trace_df.columns):
+            ax.plot(
+                time_x,
+                trace_df[col],
+                color=colors[idx],
+                alpha=0.35,
+                linewidth=1.2,
+                zorder=2,
+            )
 
     # Mean +/- SEM shadow.
     ax.fill_between(
         time_x.to_numpy(),
         (y_mean - y_sem).to_numpy(),
         (y_mean + y_sem).to_numpy(),
-        color="#f48fb1",
-        alpha=0.30,
+        color="#ff9db6",
+        alpha=0.35,
         linewidth=0,
         zorder=3,
     )
-    ax.plot(time_x, y_mean, color="#c2185b", linewidth=2.8, zorder=4)
+    ax.plot(
+        time_x,
+        y_mean,
+        color="#e64a19",
+        linewidth=2.0,
+        marker="o",
+        markersize=3.2,
+        markeredgewidth=0.0,
+        zorder=4,
+    )
 
     ax.set_xlim(0, 150)
     ax.set_ylim(0, y_max * 1.08)
@@ -214,7 +238,7 @@ def visualize_trace_csv(
     ax.set_ylabel(y_label, fontsize=20)
     ax.tick_params(axis="both", labelsize=16, width=2.0, length=6)
 
-    for side in ("top", "right"):
+    for side in ("right", "top"):
         ax.spines[side].set_visible(False)
     ax.spines["left"].set_linewidth(2.0)
     ax.spines["bottom"].set_linewidth(2.0)
@@ -236,6 +260,7 @@ def visualize_many(
     csv_paths: Sequence[str | Path],
     output_dir: str | Path | None = None,
     dpi: int = 300,
+    show_individual_traces: bool = False,
 ) -> List[Path]:
     """
     Generate trace visualizations for multiple CSV files.
@@ -250,7 +275,15 @@ def visualize_many(
             if output_root is not None
             else None
         )
-        generated.append(visualize_trace_csv(csv_path, out_path, show=False, dpi=dpi))
+        generated.append(
+            visualize_trace_csv(
+                csv_path,
+                out_path,
+                show=False,
+                dpi=dpi,
+                show_individual_traces=show_individual_traces,
+            )
+        )
     return generated
 
 
@@ -267,8 +300,18 @@ if __name__ == "__main__":
         help="Output directory for generated PNG files (optional).",
     )
     parser.add_argument("--dpi", type=int, default=300, help="Figure DPI.")
+    parser.add_argument(
+        "--show-individual-traces",
+        action="store_true",
+        help="Overlay all donor traces in addition to mean+SEM.",
+    )
     args = parser.parse_args()
 
-    outputs = visualize_many(args.csv, output_dir=args.outdir, dpi=args.dpi)
+    outputs = visualize_many(
+        args.csv,
+        output_dir=args.outdir,
+        dpi=args.dpi,
+        show_individual_traces=args.show_individual_traces,
+    )
     for path in outputs:
         print(path)
