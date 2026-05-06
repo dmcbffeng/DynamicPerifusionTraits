@@ -186,7 +186,7 @@ def visualize_grouped_trace_csv(
         )
 
     ax.set_xlim(0, 150)
-    ax.set_ylim(0, y_max * 1.08)
+    ax.set_ylim(0, y_max * 1.25)
     ax.set_xticks([0, 30, 60, 90, 120, 150])
     ax.set_xlabel("Time (min)", fontsize=16)
     ax.set_ylabel(y_label, fontsize=20)
