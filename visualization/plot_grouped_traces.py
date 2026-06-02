@@ -5,7 +5,7 @@ Grouped perifusion trace visualization (one mean + 95% CI line per group).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,6 +14,69 @@ import pandas as pd
 from plot_traces import STIMULUS_SEGMENTS, _infer_label_from_filename, _prepare_trace_data
 
 plt.rcParams["font.family"] = "Arial"
+
+
+def _resolve_group_colors(
+    sorted_groups: Sequence[Tuple[str, List[str]]], group_colors: str | None
+) -> List[str]:
+    """
+    Resolve group colors in sorted group order.
+
+    Supported formats:
+    - None: use default colorblind-friendly palette.
+    - "color1,color2,color3": positional colors mapped to sorted groups.
+    - "Group A:#1f77b4,Group B:#ff7f0e": explicit group-to-color mapping.
+    """
+    default_palette = [
+        "#0072B2",  # blue
+        "#D55E00",  # vermillion
+        "#009E73",  # green
+        "#CC79A7",  # purple
+        "#E69F00",  # orange
+        "#56B4E9",  # light blue
+        "#F0E442",  # yellow
+        "#000000",  # black
+    ]
+    if group_colors is None or not str(group_colors).strip():
+        return [default_palette[i % len(default_palette)] for i in range(len(sorted_groups))]
+
+    tokens = [token.strip() for token in str(group_colors).split(",") if token.strip()]
+    if not tokens:
+        return [default_palette[i % len(default_palette)] for i in range(len(sorted_groups))]
+
+    has_mapping = any(":" in token for token in tokens)
+    if has_mapping:
+        color_by_group: Dict[str, str] = {}
+        for token in tokens:
+            if ":" not in token:
+                raise ValueError(
+                    "When using group-to-color mapping, each entry must be "
+                    "'group_name:color'."
+                )
+            group_name, color = token.split(":", 1)
+            group_name = group_name.strip()
+            color = color.strip()
+            if not group_name or not color:
+                raise ValueError(
+                    "Each group color mapping must include non-empty group name and color."
+                )
+            color_by_group[group_name] = color
+        resolved: List[str] = []
+        for group_name, _ in sorted_groups:
+            if group_name in color_by_group:
+                resolved.append(color_by_group[group_name])
+            else:
+                raise ValueError(
+                    f"Missing color mapping for group '{group_name}'. "
+                    "Provide a color for every group."
+                )
+        return resolved
+
+    if len(tokens) < len(sorted_groups):
+        raise ValueError(
+            f"Not enough colors provided ({len(tokens)}) for {len(sorted_groups)} groups."
+        )
+    return tokens[: len(sorted_groups)]
 
 
 def _read_group_assignments(group_csv: Path) -> pd.DataFrame:
@@ -107,6 +170,7 @@ def visualize_grouped_trace_csv(
     dpi: int = 300,
     y_upper: float | None = None,
     y_scale: float = 1.2,
+    group_colors: str | None = None,
 ) -> Path:
     """
     Plot one mean trace with 95% CI for each user-defined group.
@@ -158,8 +222,8 @@ def visualize_grouped_trace_csv(
     for x in boundaries:
         ax.axvline(x=x, color="#d8d8d8", linestyle=":", linewidth=1.0, zorder=1)
 
-    palette = plt.cm.tab10(np.linspace(0, 1, max(3, len(grouped_columns))))
     sorted_groups = sorted(grouped_columns.items())
+    resolved_colors = _resolve_group_colors(sorted_groups, group_colors)
     for idx, (group_name, donors) in enumerate(sorted_groups):
         group_df = trace_df[donors]
         mean = group_df.mean(axis=1, skipna=True)
@@ -167,7 +231,7 @@ def visualize_grouped_trace_csv(
         ci_half_width = 1.96 * sem.fillna(0.0)
         ci_lower = mean - ci_half_width
         ci_upper_series = mean + ci_half_width
-        color = palette[idx]
+        color = resolved_colors[idx]
         display_label = str(group_name).strip()
         upper_for_group = float(np.nanmax(ci_upper_series.to_numpy(dtype=float)))
         if np.isfinite(upper_for_group):
@@ -257,6 +321,15 @@ if __name__ == "__main__":
         default=1.2,
         help="Auto y-axis multiplier applied to max raw/CI upper value (default: 1.2).",
     )
+    parser.add_argument(
+        "--group-colors",
+        default=None,
+        help=(
+            "Optional colors for groups. Use either positional colors "
+            "('color1,color2,...' in sorted group order) or explicit mappings "
+            "('GroupA:#1f77b4,GroupB:#ff7f0e')."
+        ),
+    )
     args = parser.parse_args()
 
     output = visualize_grouped_trace_csv(
@@ -266,5 +339,6 @@ if __name__ == "__main__":
         dpi=args.dpi,
         y_upper=args.y_upper,
         y_scale=args.y_scale,
+        group_colors=args.group_colors,
     )
     print(output)

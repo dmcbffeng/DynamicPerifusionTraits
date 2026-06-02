@@ -96,6 +96,7 @@ Optional grouped flags:
 
 - `--y-upper <float>`: fixed y-axis upper limit (overrides auto-scale)
 - `--y-scale <float>`: auto y-axis multiplier (default `1.2`)
+- `--group-colors <spec>`: custom group colors, either positional (`#0072B2,#D55E00,#009E73`) or explicit mapping (`Healthy:#0072B2,Diabetes:#D55E00,Obese:#009E73`)
 
 ## Python API
 
