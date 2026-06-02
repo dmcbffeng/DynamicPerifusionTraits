@@ -1,5 +1,5 @@
 """
-Grouped perifusion trace visualization (one mean +/- SEM line per group).
+Grouped perifusion trace visualization (one mean + 95% CI line per group).
 """
 
 from __future__ import annotations
@@ -168,7 +168,7 @@ def visualize_grouped_trace_csv(
         ci_lower = mean - ci_half_width
         ci_upper_series = mean + ci_half_width
         color = palette[idx]
-        display_label = f"group {idx + 1}"
+        display_label = str(group_name).strip()
         upper_for_group = float(np.nanmax(ci_upper_series.to_numpy(dtype=float)))
         if np.isfinite(upper_for_group):
             y_upper_candidate = max(y_upper_candidate, upper_for_group)

@@ -57,7 +57,7 @@ Output name pattern:
 ## 2) Grouped Plot (`plot_grouped_traces.py`)
 
 This script compares groups (for example, Healthy vs Diabetes) as separate mean+95% CI lines.
-Legend labels are shown as `group 1`, `group 2`, ... (with sample size), based on sorted group names.
+Legend labels use the actual group names from the assignment CSV (with sample size).
 
 ### Group assignment input
 
